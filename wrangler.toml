@@ -1,0 +1,16 @@
+name = "mergepics"
+compatibility_date = "2025-07-29"
+
+# 指定静态资产目录
+[site]
+bucket = "./dist"
+
+# 配置构建命令
+[build]
+command = "npm run build"
+output_dir = "dist"
+
+# 配置路由
+[routes]
+pattern = "/*"
+script = ".cloudflare/workers-site/index.js"
