@@ -123,7 +123,7 @@ export default function Home() {
         {/* 页面标题 */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-white mb-2">🎨 智能拼图工具</h1>
-          <p className="text-white/80 text-sm">上传图片，智能推荐布局，创意模板，滤镜美化，一键生成多平台适配的拼图作品</p>
+          <p className="text-white/80 text-sm">上传图片，智能推荐布局，创意模板，滤镜美化，一键生成多平台适配的拼贴作品</p>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-4 max-w-7xl mx-auto">
