@@ -10,6 +10,3 @@ bucket = "./dist"
 [build]
 command = "npm run build"
 
-# 配置路由
-[[routes]]
-pattern = "/*"
