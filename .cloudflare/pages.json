@@ -1,0 +1,12 @@
+{
+  "build": {
+    "command": "npm run build",
+    "output_directory": "dist"
+  },
+  "routes": [
+    {
+      "pattern": "/*",
+      "script": "workers-site/index.js"
+    }
+  ]
+}

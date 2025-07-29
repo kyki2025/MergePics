@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "node scripts/build.mjs",
     "build": "node scripts/build.mjs --production",
-    "deploy": "wrangler pages deploy dist --project-name=mergepics"
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
