@@ -208,7 +208,7 @@ export default function PresetManager({ currentConfig, onLoadPreset }: PresetMan
                       className={`
                         transition-all duration-300
                         ${isSuccess
-                          ? 'bg-blue-500/20 border-blue-400/30 text-blue-200'
+                          ? 'bg-green-500/20 border-green-400/30 text-green-200 hover:bg-green-500/30'
                           : 'bg-blue-500/20 border-blue-400/30 text-blue-200 hover:bg-blue-500/30'
                         }
                         ${isLoading ? 'cursor-wait' : 'cursor-pointer'}
