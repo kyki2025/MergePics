@@ -81,20 +81,20 @@ export default function PresetManager({ currentConfig, onLoadPreset }: PresetMan
    */
   const loadPreset = (preset: ConfigPreset) => {
     console.log('🚀 开始加载预设:', preset.name)
-    setLoadingPresetId(preset.id)
+    
+    // 清除所有状态，确保按钮可用
+    setLoadingPresetId(null)
+    setSuccessPresetId(null)
     
     // 立即调用父组件的加载函数
     onLoadPreset(preset)
     
-    // 显示加载状态
-    setTimeout(() => {
-      setLoadingPresetId(null)
-      setSuccessPresetId(preset.id)
-      console.log('✅ 预设加载成功:', preset.name)
-      
-      // 2秒后清除成功状态
-      setTimeout(() => setSuccessPresetId(null), 2000)
-    }, 200)
+    // 显示成功状态
+    setSuccessPresetId(preset.id)
+    console.log('✅ 预设加载成功:', preset.name)
+    
+    // 3秒后清除成功状态
+    setTimeout(() => setSuccessPresetId(null), 3000)
   }
 
   return (
@@ -203,21 +203,18 @@ export default function PresetManager({ currentConfig, onLoadPreset }: PresetMan
                         console.log('🎯 点击应用预设:', preset.name)
                         loadPreset(preset)
                       }}
-                      disabled={isLoading}
+                      disabled={false}
                       size="sm"
                       className={`
-                        transition-all duration-300
+                        transition-all duration-300 cursor-pointer
                         ${isSuccess
                           ? 'bg-green-500/20 border-green-400/30 text-green-200 hover:bg-green-500/30'
                           : 'bg-blue-500/20 border-blue-400/30 text-blue-200 hover:bg-blue-500/30'
                         }
-                        ${isLoading ? 'cursor-wait' : 'cursor-pointer'}
                       `}
                       variant="outline"
                     >
-                      {isLoading ? (
-                        <div className="w-3 h-3 border border-white/40 border-t-white rounded-full animate-spin" />
-                      ) : isSuccess ? (
+                      {isSuccess ? (
                         <Check className="w-3 h-3" />
                       ) : (
                         <Download className="w-3 h-3" />
