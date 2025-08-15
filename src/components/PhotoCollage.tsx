@@ -3,7 +3,7 @@
  * 支持拖拽排序、独立图片变换控制和多种模板风格
  */
 
-import { useEffect, useImperativeHandle, forwardRef, useState, useCallback } from 'react'
+import { useEffect, useImperativeHandle, forwardRef, useState, useCallback, useRef } from 'react'
 import { CollageTemplate } from '../pages/Home'
 
 interface PhotoCollageProps {
@@ -19,6 +19,14 @@ interface ImageTransform {
   x: number
   y: number
   scale: number
+}
+
+interface DragState {
+  isDragging: boolean
+  imageIndex: number
+  startX: number
+  startY: number
+  initialTransform: ImageTransform
 }
 
 /**
@@ -383,11 +391,170 @@ const PhotoCollage = forwardRef<HTMLCanvasElement, PhotoCollageProps>(
     }, [])
 
     /**
+    /**
      * 重置图片变换
      */
     const resetImageTransform = useCallback((index: number) => {
       updateImageTransform(index, { x: 0, y: 0, scale: 1 })
     }, [updateImageTransform])
+
+    /**
+     * 获取画布上的图片索引
+     */
+    const getImageIndexAtPosition = useCallback((x: number, y: number) => {
+      if (!canvasRect) return -1
+      
+      const canvas = canvasRef.current
+      if (!canvas) return -1
+      
+      const outputSize = calculateOutputSize(aspectRatio, resolution)
+      const scaleX = canvas.offsetWidth / outputSize.width
+      const scaleY = canvas.offsetHeight / outputSize.height
+      
+      // 转换为画布坐标
+      const canvasX = x / scaleX
+      const canvasY = y / scaleY
+      
+      // 计算网格参数
+      const padding = Math.min(outputSize.width, outputSize.height) * 0.02
+      const gap = template.style === 'polaroid' ? padding * 2 : padding * 0.5
+      const availableWidth = outputSize.width - (padding * 2) - (gap * (template.cols - 1))
+      const availableHeight = outputSize.height - (padding * 2) - (gap * (template.rows - 1))
+      const cellWidth = availableWidth / template.cols
+      const cellHeight = availableHeight / template.rows
+      
+      // 检查每个网格位置
+      for (let row = 0; row < template.rows; row++) {
+        for (let col = 0; col < template.cols; col++) {
+          const index = row * template.cols + col
+          if (index >= images.length) continue
+          
+          const cellX = padding + col * (cellWidth + gap)
+          const cellY = padding + row * (cellHeight + gap)
+          
+          if (canvasX >= cellX && canvasX <= cellX + cellWidth &&
+              canvasY >= cellY && canvasY <= cellY + cellHeight) {
+            return index
+          }
+        }
+      }
+      
+      return -1
+    }, [canvasRect, aspectRatio, resolution, template, images.length])
+
+    /**
+     * 处理画布上的拖拽开始
+     */
+    const handleCanvasDragStart = useCallback((clientX: number, clientY: number) => {
+      if (!canvasRect) return
+      
+      const x = clientX - canvasRect.left
+      const y = clientY - canvasRect.top
+      const imageIndex = getImageIndexAtPosition(x, y)
+      
+      if (imageIndex >= 0 && imageTransforms[imageIndex]) {
+        setDragState({
+          isDragging: true,
+          imageIndex,
+          startX: clientX,
+          startY: clientY,
+          initialTransform: { ...imageTransforms[imageIndex] }
+        })
+        setSelectedImageIndex(imageIndex)
+      }
+    }, [canvasRect, getImageIndexAtPosition, imageTransforms])
+
+    /**
+     * 处理画布上的拖拽移动
+     */
+    const handleCanvasDragMove = useCallback((clientX: number, clientY: number) => {
+      if (!dragState || !dragState.isDragging) return
+      
+      const deltaX = clientX - dragState.startX
+      const deltaY = clientY - dragState.startY
+      
+      // 转换为相对于图片尺寸的偏移
+      const sensitivity = 0.5
+      const newX = dragState.initialTransform.x + deltaX * sensitivity
+      const newY = dragState.initialTransform.y + deltaY * sensitivity
+      
+      // 限制拖拽范围
+      const maxOffset = 100
+      const clampedX = Math.max(-maxOffset, Math.min(maxOffset, newX))
+      const clampedY = Math.max(-maxOffset, Math.min(maxOffset, newY))
+      
+      updateImageTransform(dragState.imageIndex, { 
+        x: clampedX, 
+        y: clampedY 
+      })
+    }, [dragState, updateImageTransform])
+
+    /**
+     * 处理画布上的拖拽结束
+     */
+    const handleCanvasDragEnd = useCallback(() => {
+      setDragState(null)
+    }, [])
+
+    /**
+     * 鼠标事件处理
+     */
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+      e.preventDefault()
+      handleCanvasDragStart(e.clientX, e.clientY)
+    }, [handleCanvasDragStart])
+
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
+      handleCanvasDragMove(e.clientX, e.clientY)
+    }, [handleCanvasDragMove])
+
+    const handleMouseUp = useCallback(() => {
+      handleCanvasDragEnd()
+    }, [handleCanvasDragEnd])
+
+    /**
+     * 触摸事件处理
+     */
+    const handleTouchStart = useCallback((e: React.TouchEvent) => {
+      e.preventDefault()
+      const touch = e.touches[0]
+      if (touch) {
+        handleCanvasDragStart(touch.clientX, touch.clientY)
+      }
+    }, [handleCanvasDragStart])
+
+    const handleTouchMove = useCallback((e: React.TouchEvent) => {
+      e.preventDefault()
+      const touch = e.touches[0]
+      if (touch) {
+        handleCanvasDragMove(touch.clientX, touch.clientY)
+      }
+    }, [handleCanvasDragMove])
+
+    const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+      e.preventDefault()
+      handleCanvasDragEnd()
+    }, [handleCanvasDragEnd])
+
+    /**
+     * 更新画布位置信息
+     */
+    useEffect(() => {
+      const updateCanvasRect = () => {
+        if (canvasRef.current) {
+          setCanvasRect(canvasRef.current.getBoundingClientRect())
+        }
+      }
+      
+      updateCanvasRect()
+      window.addEventListener('resize', updateCanvasRect)
+      window.addEventListener('scroll', updateCanvasRect)
+      
+      return () => {
+        window.removeEventListener('resize', updateCanvasRect)
+        window.removeEventListener('scroll', updateCanvasRect)
+      }
+    }, [])
 
     // 当依赖项改变时重新绘制
     useEffect(() => {
@@ -401,15 +568,24 @@ const PhotoCollage = forwardRef<HTMLCanvasElement, PhotoCollageProps>(
       <div className="flex flex-col items-center space-y-4">
         {/* 画布容器 - 调整最大尺寸 */}
         <div className="relative">
+        <div className="relative">
           <canvas
             ref={canvasRef}
-            className="max-w-full border-2 border-white/20 rounded-lg shadow-lg bg-white/5"
+            className="max-w-full border-2 border-white/20 rounded-lg shadow-lg bg-white/5 cursor-grab active:cursor-grabbing select-none"
             style={{ 
               width: 'auto',
               height: 'auto',
-              maxWidth: '300px',  // 减小最大宽度
-              maxHeight: '350px'  // 减小最大高度
+              maxWidth: '300px',
+              maxHeight: '350px',
+              touchAction: 'none' // 防止触摸滚动
             }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={dragState?.isDragging ? handleMouseMove : undefined}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={dragState?.isDragging ? handleTouchMove : undefined}
+            onTouchEnd={handleTouchEnd}
           />
           
           {/* 加载提示 */}
@@ -529,15 +705,34 @@ const PhotoCollage = forwardRef<HTMLCanvasElement, PhotoCollageProps>(
         )}
 
         {/* 信息显示 - 简化 */}
+        {/* 信息显示 - 简化 */}
         <div className="text-center max-w-sm">
           <div className="flex justify-center gap-3 text-xs text-white/70">
             <span>📐 {outputSize.width}×{outputSize.height}</span>
             <span>🖼️ {Math.min(images.length, totalSlots)}/{totalSlots}</span>
           </div>
           
+          {/* 拖拽功能提示 */}
+          {images.length > 0 && (
+            <div className="mt-2 space-y-1">
+              <p className="text-blue-200 text-xs">
+                🖱️ 在画布上拖拽图片可微调位置
+              </p>
+              <p className="text-white/60 text-xs">
+                📱 手机端长按拖拽 | 💻 电脑端直接拖拽
+              </p>
+            </div>
+          )}
+          
           {selectedImageIndex !== null && (
             <p className="text-yellow-200 text-xs mt-2">
-              💡 点击其他图片或空白区域取消选择
+              💡 当前选中图片 {selectedImageIndex + 1}，可用滑块精确调整
+            </p>
+          )}
+          
+          {dragState?.isDragging && (
+            <p className="text-green-200 text-xs mt-2 animate-pulse">
+              ✨ 正在拖拽调整图片位置...
             </p>
           )}
         </div>
