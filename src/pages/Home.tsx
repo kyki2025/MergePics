@@ -93,10 +93,29 @@ export default function Home() {
    * 加载预设配置
    */
   const handleLoadPreset = useCallback((preset: ConfigPreset) => {
-    setSelectedTemplate(preset.template)
+    console.log('📥 父组件接收到预设加载请求:', preset.name)
+    
+    // 确保模板对象完整
+    const template = {
+      id: preset.template.id,
+      name: preset.template.name,
+      rows: preset.template.rows,
+      cols: preset.template.cols,
+      description: preset.template.description,
+      style: preset.template.style || 'grid'
+    }
+    
+    setSelectedTemplate(template)
     setAspectRatio(preset.aspectRatio)
     setResolution(preset.resolution)
     setSelectedFilter(preset.filter)
+    
+    console.log('✅ 预设配置已应用:', {
+      template: template.name,
+      aspectRatio: preset.aspectRatio,
+      resolution: preset.resolution,
+      filter: preset.filter
+    })
   }, [])
 
   /**

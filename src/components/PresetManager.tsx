@@ -77,28 +77,24 @@ export default function PresetManager({ currentConfig, onLoadPreset }: PresetMan
   }
 
   /**
-   * 加载预设 - 简化版本
+   * 加载预设
    */
   const loadPreset = (preset: ConfigPreset) => {
     console.log('🚀 开始加载预设:', preset.name)
     setLoadingPresetId(preset.id)
     
-    try {
-      // 直接调用父组件的加载函数
-      onLoadPreset(preset)
-      
-      setTimeout(() => {
-        setLoadingPresetId(null)
-        setSuccessPresetId(preset.id)
-        console.log('✅ 预设加载成功:', preset.name)
-        
-        setTimeout(() => setSuccessPresetId(null), 2000)
-      }, 300)
-      
-    } catch (error) {
-      console.error('❌ 预设加载失败:', error)
+    // 立即调用父组件的加载函数
+    onLoadPreset(preset)
+    
+    // 显示加载状态
+    setTimeout(() => {
       setLoadingPresetId(null)
-    }
+      setSuccessPresetId(preset.id)
+      console.log('✅ 预设加载成功:', preset.name)
+      
+      // 2秒后清除成功状态
+      setTimeout(() => setSuccessPresetId(null), 2000)
+    }, 200)
   }
 
   return (
