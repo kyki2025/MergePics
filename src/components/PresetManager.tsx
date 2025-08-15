@@ -203,21 +203,26 @@ export default function PresetManager({ currentConfig, onLoadPreset }: PresetMan
                         console.log('🎯 点击应用预设:', preset.name)
                         loadPreset(preset)
                       }}
-                      disabled={false}
                       size="sm"
                       className={`
-                        transition-all duration-300 cursor-pointer
+                        transition-all duration-300 cursor-pointer !opacity-100
                         ${isSuccess
-                          ? 'bg-green-500/20 border-green-400/30 text-green-200 hover:bg-green-500/30'
-                          : 'bg-blue-500/20 border-blue-400/30 text-blue-200 hover:bg-blue-500/30'
+                          ? 'bg-green-500/30 border-green-400/50 text-green-100 hover:bg-green-500/40'
+                          : 'bg-blue-500/30 border-blue-400/50 text-blue-100 hover:bg-blue-500/40'
                         }
                       `}
                       variant="outline"
                     >
                       {isSuccess ? (
-                        <Check className="w-3 h-3" />
+                        <>
+                          <Check className="w-3 h-3 mr-1" />
+                          已应用
+                        </>
                       ) : (
-                        <Download className="w-3 h-3" />
+                        <>
+                          <Download className="w-3 h-3 mr-1" />
+                          应用
+                        </>
                       )}
                     </Button>
                     <Button
